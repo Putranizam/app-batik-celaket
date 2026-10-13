@@ -73,36 +73,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sync with storage and cookies on mount, plus Seeder inisialisasi akun
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        // Seeder: Pastikan Super Admin terdaftar di mock repository sistem
-        const accountsRepo = localStorage.getItem("system_accounts");
-        if (!accountsRepo) {
-          localStorage.setItem(
-            "system_accounts",
-            JSON.stringify([DEFAULT_SUPER_ADMIN, DEFAULT_REGULAR_USER])
-          );
-        }
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        try {
+          // Seeder: Pastikan Super Admin terdaftar di mock repository sistem
+          const accountsRepo = localStorage.getItem("system_accounts");
+          if (!accountsRepo) {
+            localStorage.setItem(
+              "system_accounts",
+              JSON.stringify([DEFAULT_SUPER_ADMIN, DEFAULT_REGULAR_USER])
+            );
+          }
 
-        const stored = localStorage.getItem("user");
-        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          const stored = localStorage.getItem("user");
 
-        if (stored) {
-          const parsed: User = JSON.parse(stored);
-          setUser(parsed);
-          setCookie("session_user", JSON.stringify({ id: parsed.id, role: parsed.role }));
-        } else {
+          if (stored) {
+            const parsed: User = JSON.parse(stored);
+            setUser(parsed);
+            setCookie("session_user", JSON.stringify({ id: parsed.id, role: parsed.role }));
+          } else {
+            setUser(null);
+            deleteCookie("session_user");
+            deleteCookie("token");
+          }
+        } catch {
           setUser(null);
           deleteCookie("session_user");
-          deleteCookie("token");
+        } finally {
+          setIsLoading(false);
         }
-      } catch {
-        setUser(null);
-        deleteCookie("session_user");
-      } finally {
-        setIsLoading(false);
       }
-    }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const register = ({
